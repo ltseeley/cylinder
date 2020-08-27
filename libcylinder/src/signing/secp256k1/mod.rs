@@ -158,7 +158,7 @@ mod secp256k1_test {
         let context = create_context("secp256k1").unwrap();
         assert_eq!(context.get_algorithm_name(), "secp256k1");
 
-        let factory = CryptoFactory::new(&*context);
+        let factory = CryptoFactory::new(context);
         assert_eq!(factory.get_context().get_algorithm_name(), "secp256k1");
 
         let priv_key =
@@ -170,18 +170,18 @@ mod secp256k1_test {
         assert_eq!(signature, MSG1_KEY1_SIG);
     }
 
-    fn create_signer() -> ContextSigner<'static> {
+    fn create_signer() -> ContextSigner {
         let context = create_context("secp256k1").unwrap();
         assert_eq!(context.get_algorithm_name(), "secp256k1");
 
-        let factory = CryptoFactory::new(&*context);
+        let factory = CryptoFactory::new(context.clone());
         assert_eq!(factory.get_context().get_algorithm_name(), "secp256k1");
 
         let priv_key =
             PrivateKey::new_from_hex(KEY1_PRIV_HEX).expect("Failed to parse key from hex");
         assert_eq!(priv_key.as_hex(), KEY1_PRIV_HEX);
 
-        ContextSigner::new_boxed(context, priv_key)
+        ContextSigner::new(context, priv_key)
     }
 
     #[test]
