@@ -177,6 +177,7 @@ impl CryptoFactory {
 }
 
 /// A convenient wrapper of Context and PrivateKey
+#[derive(Clone)]
 pub struct ContextSigner {
     context: Arc<dyn Context>,
     private_key: PrivateKey,
@@ -228,6 +229,10 @@ impl Signer for ContextSigner {
 
     fn public_key(&self) -> Result<PublicKey, SigningError> {
         self.get_public_key().map_err(SigningError::from)
+    }
+
+    fn clone_box(&self) -> Box<dyn Signer> {
+        Box::new(self.clone())
     }
 }
 
