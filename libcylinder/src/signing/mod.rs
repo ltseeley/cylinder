@@ -170,13 +170,13 @@ impl<'a> CryptoFactory<'a> {
     /// # Returns
     ///
     /// * `signer` - a `ContextSigner` instance
-    pub fn new_signer(&self, key: &'a PrivateKey) -> ContextSigner {
+    pub fn new_signer(&self, key: PrivateKey) -> ContextSigner {
         ContextSigner::new(self.context, key)
     }
 }
 
 enum ContextAndKey<'a> {
-    ByRef(&'a dyn Context, &'a PrivateKey),
+    ByRef(&'a dyn Context, PrivateKey),
     ByBox(Box<dyn Context>, PrivateKey),
 }
 
@@ -192,7 +192,7 @@ impl<'a> ContextSigner<'a> {
     ///
     /// * `context` - a cryptographic context
     /// * `private_key` - private key
-    pub fn new(context: &'a dyn Context, key: &'a PrivateKey) -> Self {
+    pub fn new(context: &'a dyn Context, key: PrivateKey) -> Self {
         ContextSigner {
             context_and_key: ContextAndKey::ByRef(context, key),
         }
@@ -221,7 +221,7 @@ impl<'a> ContextSigner<'a> {
     /// * `signature` - the signature in a hex-encoded string
     pub fn sign(&self, message: &[u8]) -> Result<String, Error> {
         match &self.context_and_key {
-            ContextAndKey::ByRef(context, key) => context.sign(message, *key),
+            ContextAndKey::ByRef(context, key) => context.sign(message, &key),
             ContextAndKey::ByBox(context, key) => context.sign(message, &key),
         }
     }
@@ -233,7 +233,7 @@ impl<'a> ContextSigner<'a> {
     /// * `public_key` - the public key instance
     pub fn get_public_key(&self) -> Result<PublicKey, Error> {
         match &self.context_and_key {
-            ContextAndKey::ByRef(context, key) => context.get_public_key(*key),
+            ContextAndKey::ByRef(context, key) => context.get_public_key(&key),
             ContextAndKey::ByBox(context, key) => context.get_public_key(&key),
         }
     }

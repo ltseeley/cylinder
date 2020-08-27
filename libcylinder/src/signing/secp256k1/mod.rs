@@ -165,7 +165,7 @@ mod secp256k1_test {
             PrivateKey::new_from_hex(KEY1_PRIV_HEX).expect("Failed to parse key from hex");
         assert_eq!(priv_key.as_hex(), KEY1_PRIV_HEX);
 
-        let signer = factory.new_signer(&priv_key);
+        let signer = factory.new_signer(priv_key);
         let signature = signer.sign(&String::from(MSG1).into_bytes()).unwrap();
         assert_eq!(signature, MSG1_KEY1_SIG);
     }
