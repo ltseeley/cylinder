@@ -26,38 +26,27 @@ use cylinder::{
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 fn test_signing_multithreading<C: Context + 'static>(context: C) -> TestResult {
-    let key_hex = "2f1e7b7a130d7ba9da0068b3bb0ba1d79e7e77110302c9f746c3c2a63fe40088";
+    let private_key = PrivateKey::new_from_hex(
+        "2f1e7b7a130d7ba9da0068b3bb0ba1d79e7e77110302c9f746c3c2a63fe40088",
+    )
+    .expect("Unable to parse private key");
     let arc_context = Arc::new(context);
+    let factory = CryptoFactory::new(arc_context.clone());
+    let signer = factory.new_signer(private_key.clone());
 
-    let ctx1 = Arc::clone(&arc_context);
-    let jh1: thread::JoinHandle<String> = thread::spawn(move || {
-        let private_key = PrivateKey::new_from_hex(key_hex).expect("Unable to parse private key");
+    let signer1 = signer.clone();
+    let jh1: thread::JoinHandle<String> =
+        thread::spawn(move || signer1.sign(b"Hello").expect("Unable to sign bytes"));
 
-        let factory = CryptoFactory::new(&*ctx1);
-
-        let signer = factory.new_signer(&private_key);
-
-        signer.sign(b"Hello").expect("Unable to sign bytes")
-    });
-
-    let ctx2 = Arc::clone(&arc_context);
-    let jh2: thread::JoinHandle<String> = thread::spawn(move || {
-        let private_key = PrivateKey::new_from_hex(key_hex).expect("Unable to parse private key");
-
-        let factory = CryptoFactory::new(&*ctx2);
-
-        let signer = factory.new_signer(&private_key);
-
-        signer.sign(b"Hello").expect("Unable to sign bytes")
-    });
-
+    let signer2 = signer.clone();
+    let jh2: thread::JoinHandle<String> =
+        thread::spawn(move || signer2.sign(b"Hello").expect("Unable to sign bytes"));
 
     let sig1 = jh1.join().expect("child thread 1 panicked");
     let sig2 = jh2.join().expect("child thread 2 panicked");
 
     assert_eq!(sig1, sig2);
 
-    let private_key = PrivateKey::new_from_hex(key_hex).expect("Unable to parse private key");
     let public_key = arc_context.get_public_key(&private_key)?;
     assert!(arc_context.verify(&sig1, b"Hello", &public_key)?);
     assert!(arc_context.verify(&sig2, b"Hello", &public_key)?);
